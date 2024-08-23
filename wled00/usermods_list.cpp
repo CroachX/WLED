@@ -185,6 +185,10 @@
 #include "../usermods/LDR_Dusk_Dawn_v2/usermod_LDR_Dusk_Dawn_v2.h"
 #endif
 
+#ifdef USERMOD_POWER_BUTTON
+#include "../usermods/PowerButton/usermode_powerbutton.h"
+#endif
+
 //WLEDMM ARTIFX
 #ifdef USERMOD_ARTIFX
 #include "../usermods/artifx/usermod_v2_artifx.h"

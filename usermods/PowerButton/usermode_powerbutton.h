@@ -10,6 +10,8 @@
 #define USERMOD_POWER_BUTTON_INTERVAL 50
 #endif
 
+#define LONG_PRESS_TIME (2500)
+
 // power_btn_pin 39
 // btn_pin 14
 
@@ -21,15 +23,22 @@
  */
 class UsermodPowerButton : public Usermod {
   private:
+    enum ButtonStatus {
+        Pressed,
+        Released,
+    };
     // power button pin can be defined in my_config.h
     int8_t powerBtnPin = USERMOD_POWER_BUTTON_PIN;
     // how often to read the button status
     unsigned long readingInterval = USERMOD_POWER_BUTTON_INTERVAL;
     unsigned long nextReadTime = 0;
     unsigned long lastReadTime = 0;
+    unsigned long pressedTime = 0;
 
     bool initDone = false;
     bool initializing = true;
+
+    ButtonStatus btnStatus = Released;
 
     byte oriBright = 0;
 
@@ -129,8 +138,18 @@ class UsermodPowerButton : public Usermod {
 
         initializing = false;
 
-        // Croach: handle to power button status
-        //  press -> relase, trigger sleep
+        if (LOW == digitalRead(powerBtnPin)) { // pressed
+            if (Released == btnStatus) {
+                pressedTime = millis();
+            }
+            btnStatus = Pressed;
+        } else {
+            if ((Pressed == btnStatus) &&
+                (LONG_PRESS_TIME < (millis() - pressedTime))) {
+                sleep();
+            }
+            btnStatus = Released;
+        }
     }
 
     /*
