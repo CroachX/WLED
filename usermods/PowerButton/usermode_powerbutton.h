@@ -50,20 +50,9 @@ class UsermodPowerButton : public Usermod {
         bri = 0;
         stateUpdated(CALL_MODE_DIRECT_CHANGE);
 
-        // deep sleep
-        esp_sleep_enable_ext0_wakeup((gpio_num_t)powerBtnPin, LOW);
-        esp_deep_sleep_start();
-        // light sleep
-        gpio_config_t config = {.pin_bit_mask = BIT64(powerBtnPin),
-                                .mode = GPIO_MODE_INPUT,
-                                .pull_up_en = GPIO_PULLUP_DISABLE,
-                                .pull_down_en = GPIO_PULLDOWN_DISABLE,
-                                .intr_type = GPIO_INTR_DISABLE};
-        gpio_config(&config);
-
         gpio_wakeup_enable((gpio_num_t)powerBtnPin, GPIO_INTR_LOW_LEVEL);
         esp_sleep_enable_gpio_wakeup();
-        //        esp_light_sleep_start();
+        esp_light_sleep_start();
     }
 
     /*
@@ -147,6 +136,7 @@ class UsermodPowerButton : public Usermod {
             if ((Pressed == btnStatus) &&
                 (LONG_PRESS_TIME < (millis() - pressedTime))) {
                 sleep();
+                wakeup();
             }
             btnStatus = Released;
         }
