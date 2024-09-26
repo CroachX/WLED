@@ -12,6 +12,8 @@
 
 #define LONG_PRESS_TIME (2500)
 
+#define HIBERNATION_TIME (1000)
+
 // power_btn_pin 39
 // btn_pin 14
 
@@ -34,6 +36,9 @@ class UsermodPowerButton : public Usermod {
     unsigned long nextReadTime = 0;
     unsigned long lastReadTime = 0;
     unsigned long pressedTime = 0;
+
+    unsigned long powerTriggerTime = 0;
+    bool isHibernationMode = false;
 
     bool initDone = false;
     bool initializing = true;
@@ -61,6 +66,15 @@ class UsermodPowerButton : public Usermod {
     void wakeup() {
         bri = oriBright;
         stateUpdated(CALL_MODE_DIRECT_CHANGE);
+    }
+
+    /*
+     * update the lamp status
+     */
+    void lampUdated() {
+        stateUpdated(CALL_MODE_BUTTON);
+        if ((millis() - lastInterfaceUpdate) > INTERFACE_UPDATE_COOLDOWN)
+            updateInterfaces(CALL_MODE_BUTTON);
     }
 
   public:
@@ -104,6 +118,10 @@ class UsermodPowerButton : public Usermod {
      *
      */
     void loop() {
+        // Need to change the hibernation behavior
+        // 1. var to remember on or off
+        // 2. add delayTask time, hibernation in loop after off for delayTask
+        // 3. turn off fourline display and led
         // WLEDMM begin
         if (!enabled) {
             return;
@@ -135,10 +153,18 @@ class UsermodPowerButton : public Usermod {
         } else {
             if ((Pressed == btnStatus) &&
                 (LONG_PRESS_TIME < (millis() - pressedTime))) {
-                sleep();
-                wakeup();
+                powerTriggerTime = millis();
+                toggleOnOff();
+                lampUdated();
+                isHibernationMode = true;
             }
             btnStatus = Released;
+        }
+        if (isHibernationMode &&
+            (HIBERNATION_TIME < (millis() - powerTriggerTime))) {
+            sleep();
+            wakeup();
+            isHibernationMode = false;
         }
     }
 
